@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Reset All Data
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger" role="alert">
+                    <h6 class="alert-heading">⚠️ Warning: This action is irreversible!</h6>
+                    <p>This will permanently delete:</p>
+                    <ul>
+                        <li>All your transactions</li>
+                        <li>All financial data</li>
+                        <li>All room configurations</li>
+                        <li>All historical records</li>
+                    </ul>
+                    <hr>
+                    <p class="mb-0">This action cannot be undone. Please make sure you want to proceed.</p>
+                </div>
+                
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="confirm" class="form-label">
+                            <strong>Type "DELETE_ALL_DATA" to confirm:</strong>
+                        </label>
+                        <input type="text" class="form-control" id="confirm" name="confirm" 
+                               required placeholder="Type DELETE_ALL_DATA here">
+                        <div class="form-text">This confirmation is case-sensitive.</div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg" id="resetButton" disabled>
+                            <i class="fas fa-trash-alt me-2"></i>Reset All Data
+                        </button>
+                        <a href="{{ url_for('transactions') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Cancel - Go Back
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-body">
+                <h6 class="card-title">
+                    <i class="fas fa-lightbulb me-2"></i>Alternative Options
+                </h6>
+                <p class="card-text">Instead of resetting everything, you might want to:</p>
+                <ul>
+                    <li>Delete individual transactions from the <a href="{{ url_for('transactions') }}">History page</a></li>
+                    <li>Edit incorrect transactions instead of deleting them</li>
+                    <li>Export your data before resetting (feature coming soon)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Enable reset button only when correct confirmation is typed
+document.getElementById('confirm').addEventListener('input', function() {
+    const resetButton = document.getElementById('resetButton');
+    const confirmText = this.value;
+    
+    if (confirmText === 'DELETE_ALL_DATA') {
+        resetButton.disabled = false;
+        resetButton.classList.remove('btn-secondary');
+        resetButton.classList.add('btn-danger');
+    } else {
+        resetButton.disabled = true;
+        resetButton.classList.remove('btn-danger');
+        resetButton.classList.add('btn-secondary');
+    }
+});
+</script>
+{% endblock %}

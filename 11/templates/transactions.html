@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Transaction History
+                </h5>
+                <div>
+                    <span class="badge bg-primary me-2">{{ transactions|length }} transactions</span>
+                    <a href="{{ url_for('reset_data') }}" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-trash-alt me-1"></i>Reset All Data
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Category</th>
+                                    <th>Room</th>
+                                    <th>Description</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr class="{{ 'table-success' if transaction.is_income else 'table-danger' }}">
+                                    <td>{{ transaction.date[:10] }}</td>
+                                    <td>
+                                        <span class="badge {{ 'bg-success' if transaction.is_income else 'bg-danger' }}">
+                                            <i class="fas {{ 'fa-arrow-up' if transaction.is_income else 'fa-arrow-down' }} me-1"></i>
+                                            {{ 'Income' if transaction.is_income else 'Expense' }}
+                                        </span>
+                                    </td>
+                                    <td><strong>{{ '₹' if transaction.currency == 'INR' else '$' }}{{ "%.2f"|format(transaction.amount) }}</strong></td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ transaction.category }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ transaction.room }}</span>
+                                    </td>
+                                    <td>{{ transaction.description }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('edit_transaction', transaction_id=transaction.id) }}" 
+                                               class="btn btn-outline-primary btn-sm" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                    onclick="confirmDelete({{ transaction.id }})" title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-inbox fa-4x mb-3"></i>
+                        <h4>No transactions yet</h4>
+                        <p>Start tracking your finances by adding your first transaction.</p>
+                        <a href="{{ url_for('add_transaction') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add Transaction
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+<!-- Delet
+e Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this transaction? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-danger">Delete Transaction</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(transactionId) {
+    const deleteForm = document.getElementById('deleteForm');
+    deleteForm.action = `/delete_transaction/${transactionId}`;
+    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    deleteModal.show();
+}
+</script>
+{% endblock %}

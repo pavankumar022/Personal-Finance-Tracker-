@@ -1,0 +1,29 @@
+[
+  {
+    "amount": 100.0,
+    "description": "ticket",
+    "category": "Movie",
+    "is_income": false,
+    "date": "2025-09-16T21:57:07.919079",
+    "currency": "INR",
+    "room": "Personal"
+  },
+  {
+    "amount": 1000.0,
+    "description": "job",
+    "category": "Company",
+    "is_income": false,
+    "date": "2025-09-16T21:57:35.970691",
+    "currency": "INR",
+    "room": "Personal"
+  },
+  {
+    "amount": 10000.0,
+    "description": "job",
+    "category": "Company",
+    "is_income": true,
+    "date": "2025-09-16T21:58:05.275144",
+    "currency": "INR",
+    "room": "Personal"
+  }
+]

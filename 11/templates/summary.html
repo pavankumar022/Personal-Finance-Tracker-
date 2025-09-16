@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-bar me-2"></i>Financial Summary
+            {% if current_room != 'All' %}
+                <span class="badge bg-primary">{{ current_room }}</span>
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success">Total Income</h5>
+                <div class="row">
+                    <div class="col-6">
+                        <h3 class="text-success">${{ "%.2f"|format(total_income.USD) }}</h3>
+                        <small class="text-muted">USD</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-success">₹{{ "%.2f"|format(total_income.INR) }}</h3>
+                        <small class="text-muted">INR</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-danger">Total Expenses</h5>
+                <div class="row">
+                    <div class="col-6">
+                        <h3 class="text-danger">${{ "%.2f"|format(total_expenses.USD) }}</h3>
+                        <small class="text-muted">USD</small>
+                    </div>
+                    <div class="col-6">
+                        <h3 class="text-danger">₹{{ "%.2f"|format(total_expenses.INR) }}</h3>
+                        <small class="text-muted">INR</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Net Balance (USD)</h5>
+                <h2 class="{{ 'text-success' if balance.USD >= 0 else 'text-danger' }}">
+                    ${{ "%.2f"|format(balance.USD) }}
+                </h2>
+                {% if balance.USD < 0 %}
+                    <small class="text-muted">⚠️ Spending more than earning</small>
+                {% elif balance.USD > 0 %}
+                    <small class="text-muted">✓ Saving money</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">Net Balance (INR)</h5>
+                <h2 class="{{ 'text-success' if balance.INR >= 0 else 'text-danger' }}">
+                    ₹{{ "%.2f"|format(balance.INR) }}
+                </h2>
+                {% if balance.INR < 0 %}
+                    <small class="text-muted">⚠️ Spending more than earning</small>
+                {% elif balance.INR > 0 %}
+                    <small class="text-muted">✓ Saving money</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if category_summary %}
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tags me-2"></i>Category Breakdown
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for category, amounts in category_summary.items() %}
+                        {% if amounts.expenses > 0 or amounts.income > 0 %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ category }}</h6>
+                                    {% if amounts.income > 0 %}
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-success">Income:</span>
+                                            <span class="text-success">${{ "%.2f"|format(amounts.income) }}</span>
+                                        </div>
+                                    {% endif %}
+                                    {% if amounts.expenses > 0 %}
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-danger">Expenses:</span>
+                                            <span class="text-danger">${{ "%.2f"|format(amounts.expenses) }}</span>
+                                        </div>
+                                    {% endif %}
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Net:</strong>
+                                        <strong class="{{ 'text-success' if amounts.net >= 0 else 'text-danger' }}">
+                                            ${{ "%.2f"|format(amounts.net) }}
+                                        </strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if total_income.USD > 0 or total_income.INR > 0 %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        {% if total_income.USD > 0 %}
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Savings Rate (USD)</h5>
+                {% set savings_rate_usd = ((total_income.USD - total_expenses.USD) / total_income.USD * 100) %}
+                <h3 class="{{ 'text-success' if savings_rate_usd >= 0 else 'text-danger' }}">
+                    {{ "%.1f"|format(savings_rate_usd) }}%
+                </h3>
+                <div class="progress mt-2">
+                    <div class="progress-bar {{ 'bg-success' if savings_rate_usd >= 0 else 'bg-danger' }}" 
+                         style="width: {{ [savings_rate_usd|abs, 100]|min }}%"></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <div class="col-md-6">
+        {% if total_income.INR > 0 %}
+        <div class="card">
+            <div class="card-body text-center">
+                <h5>Savings Rate (INR)</h5>
+                {% set savings_rate_inr = ((total_income.INR - total_expenses.INR) / total_income.INR * 100) %}
+                <h3 class="{{ 'text-success' if savings_rate_inr >= 0 else 'text-danger' }}">
+                    {{ "%.1f"|format(savings_rate_inr) }}%
+                </h3>
+                <div class="progress mt-2">
+                    <div class="progress-bar {{ 'bg-success' if savings_rate_inr >= 0 else 'bg-danger' }}" 
+                         style="width: {{ [savings_rate_inr|abs, 100]|min }}%"></div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}

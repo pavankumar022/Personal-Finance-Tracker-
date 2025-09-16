@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-line me-2"></i>Dashboard
+            {% if current_room != 'All' %}
+                <span class="badge bg-primary">{{ current_room }}</span>
+            {% endif %}
+        </h1>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-success">
+                    <i class="fas fa-arrow-up me-2"></i>Total Income
+                </h5>
+                <div class="row">
+                    <div class="col-6">
+                        <h4 class="text-success">${{ "%.2f"|format(total_income.USD) }}</h4>
+                        <small class="text-muted">USD</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">₹{{ "%.2f"|format(total_income.INR) }}</h4>
+                        <small class="text-muted">INR</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title text-danger">
+                    <i class="fas fa-arrow-down me-2"></i>Total Expenses
+                </h5>
+                <div class="row">
+                    <div class="col-6">
+                        <h4 class="text-danger">${{ "%.2f"|format(total_expenses.USD) }}</h4>
+                        <small class="text-muted">USD</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-danger">₹{{ "%.2f"|format(total_expenses.INR) }}</h4>
+                        <small class="text-muted">INR</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-balance-scale me-2"></i>Net Balance (USD)
+                </h5>
+                <h3 class="{{ 'balance-positive' if balance.USD >= 0 else 'balance-negative' }}">
+                    ${{ "%.2f"|format(balance.USD) }}
+                </h3>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-balance-scale me-2"></i>Net Balance (INR)
+                </h5>
+                <h3 class="{{ 'balance-positive' if balance.INR >= 0 else 'balance-negative' }}">
+                    ₹{{ "%.2f"|format(balance.INR) }}
+                </h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Transactions
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_transactions %}
+                    {% for transaction in recent_transactions %}
+                        <div class="card mb-2 {{ 'transaction-income' if transaction.is_income else 'transaction-expense' }}">
+                            <div class="card-body py-2">
+                                <div class="row align-items-center">
+                                    <div class="col-md-3">
+                                        <small class="text-muted">
+                                            {{ transaction.date[:10] }}
+                                        </small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <span class="badge {{ 'bg-success' if transaction.is_income else 'bg-danger' }}">
+                                            {{ 'Income' if transaction.is_income else 'Expense' }}
+                                        </span>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <strong>{{ '₹' if transaction.currency == 'INR' else '$' }}{{ "%.2f"|format(transaction.amount) }}</strong>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <span class="badge bg-secondary">{{ transaction.category }}</span>
+                                    </div>
+                                    <div class="col-md-1">
+                                        <span class="badge bg-info">{{ transaction.room }}</span>
+                                    </div>
+                                    <div class="col-md-1">
+                                        {{ transaction.description }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('transactions') }}" class="btn btn-outline-primary">
+                            View All Transactions
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted">
+                        <i class="fas fa-inbox fa-3x mb-3"></i>
+                        <p>No transactions yet. <a href="{{ url_for('add_transaction') }}">Add your first transaction</a>!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>Expense Breakdown
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="expenseChart" width="300" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12 text-center">
+        <a href="{{ url_for('add_transaction') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus me-2"></i>Add New Transaction
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Fetch chart data and create pie chart
+const currentRoom = '{{ current_room }}';
+const apiUrl = currentRoom === 'All' ? '/api/chart_data' : `/api/chart_data/${currentRoom}`;
+
+fetch(apiUrl)
+    .then(response => response.json())
+    .then(data => {
+        if (data.usd.length > 0 || data.inr.length > 0) {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            
+            // Combine USD and INR data for display
+            const combinedData = [];
+            const combinedLabels = [];
+            
+            data.usd.forEach(item => {
+                combinedLabels.push(`${item.category} (USD)`);
+                combinedData.push(item.amount);
+            });
+            
+            data.inr.forEach(item => {
+                combinedLabels.push(`${item.category} (INR)`);
+                combinedData.push(item.amount / 80); // Convert to USD equivalent for chart sizing
+            });
+            
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: combinedLabels,
+                    datasets: [{
+                        data: combinedData,
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
+                            '#9966FF', '#FF9F40', '#FF6B6B', '#4ECDC4',
+                            '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        } else {
+            document.getElementById('expenseChart').style.display = 'none';
+            document.querySelector('#expenseChart').parentElement.innerHTML = 
+                '<div class="text-center text-muted"><i class="fas fa-chart-pie fa-3x mb-3"></i><p>No expense data yet</p></div>';
+        }
+    });
+</script>
+{% endblock %}
